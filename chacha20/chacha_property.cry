@@ -13,6 +13,15 @@ property chacha20_coreDiff inp1 inp2 = if chacha20_core inp1 != chacha20_core in
                                        else True 
 //:prove chacha20_coreDiff :  [16][32] -> [16][32] -> Bit
 
+/**
+*/
+
+chacha20_coreDifff : [16][32] -> [16][32] -> Bit
+property chacha20_coreDifff inp1 inp2 = if chacha20_core inp1 == chacha20_core inp2 
+                                           then inp1 == inp2
+                                        else True 
+//:prove chacha20_coreDifff :  [16][32] -> [16][32] -> Bit
+
 chacha20_coreDiff4 : [16][32] -> [16][32] -> Bit
 property chacha20_coreDiff4 inp1 inp2 = chacha20_coreDiff2 inp1 inp2 == chacha20_coreDiff inp1 inp2
 //:prove chacha20_coreDiff4 : [16][32] -> [16][32] -> Bit
@@ -43,9 +52,11 @@ ChaCha20Decrypt3 : [8][32] -> Bit
 property ChaCha20Decrypt3 key = ChaCha20_ctr32 tinp key tcounter == tout
 //:sat ChaCha20Decrypt3 : [8][32] -> Bit
 
-
-
-
+ChaChaimp : {n}(fin n) => [n][8] -> [n][8] -> [8][32] -> [8][32]-> [4][32] -> [4][32] -> Bit
+property ChaChaimp inp1 inp2 key1 key2 counter1 counter2 = if (ChaCha20_ctr32 inp1 key1 counter1) !=  (ChaCha20_ctr32 inp2 key2 counter2)
+                                                       then (counter1 != counter2 \/ key1 != key2 \/ inp1 != inp2)
+                                                       else True
+//:prove ChaChaimp : [64][8] -> [64][8] -> [8][32] -> [8][32] -> [4][32] -> [4][32] -> Bit
 
 
 

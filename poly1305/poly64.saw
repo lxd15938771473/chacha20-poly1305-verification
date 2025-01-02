@@ -1,5 +1,5 @@
-import "poly64.cry";
-llvm <- llvm_load_module "poly.bc";
+import "poly_openssl64.cry";
+llvm <- llvm_load_module "poly64.bc";
 
 
 let alloc_init typ value = do {
@@ -15,7 +15,7 @@ let ptr_to_fresh name typ = do {
 };
 
 let U8TOU64_setup = do {
-    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 8 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 8 (llvm_int 8));  
     llvm_execute_func [arrp];
     let arr' = {{ U8TOU64 arr }};
     llvm_return (llvm_term {{arr'}});
@@ -26,7 +26,7 @@ u8tou64 <- llvm_verify llvm "U8TOU64" [] false U8TOU64_setup yices;
 
 
 let U64TO8_setup = do {
-    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 8 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 8 (llvm_int 8));  
     v <- llvm_fresh_var "v" (llvm_int 64);
     llvm_execute_func [arrp, llvm_term v];           //非指针要这样声明
     let v' = {{ U64TO8 v }};
@@ -50,8 +50,7 @@ let poly1305_init_setup = do {
     llvm_points_to (llvm_field poly1305_internal "r") (llvm_term {{ poly1305_internal''.r }});
 };
 
-llvm_verify llvm "poly1305_init" [u8tou64] false poly1305_init_setup (w4_unint_z3 []);
-
+llvm_verify llvm "poly1305_init" [] false poly1305_init_setup yices;
 
 let poly1305_blocks_setup n = do {
     poly1305_internal <- llvm_alloc (llvm_struct "struct.poly1305_internal");
@@ -70,9 +69,13 @@ let poly1305_blocks_setup n = do {
     // llvm_points_to inpp (llvm_term inp');
 };
 
-llvm_verify llvm "poly1305_blocks" [] true (poly1305_blocks_setup 128) yices;
+let check_poly1305_blocks n = do {
+    print (str_concat "Checking C Code and Cryptol Spec equivalent for byte count " (show n));
+    time(llvm_verify llvm "poly1305_blocks" [] true (poly1305_blocks_setup n) yices);
+};
 
-
+let ns = (eval_list {{ [128..129:[16]] }});
+for ns (\n -> check_poly1305_blocks (eval_int n));
 
 let poly1305_emit_setup = do {
     (mac, macp) <- ptr_to_fresh "mac" (llvm_array 16 (llvm_int 8));  //第一个是cryptol参数第二个是c参数

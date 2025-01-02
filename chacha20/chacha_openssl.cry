@@ -6,19 +6,19 @@ type Chacha_buf = {
 }
 type Random = [16][8]
 
-// ROTATE : [32] -> Integer -> [32]
-// ROTATE v n = ((v << n) || (v >> (32 - n)))
+ROTATE : [32] -> Integer -> [32]
+ROTATE v n = ((v << n) || (v >> (32 - n)))
 
 QUARTERROUND : [4][32] -> [4][32]
 QUARTERROUND [a, b, c, d] = [a'', b'', c'', d''] where
     a' = a + b
-    d' = (d ^ a') <<< 0x10
+    d' = ROTATE (d ^ a') 16
     c' = c + d'
-    b' = (b ^ c') <<< 0xc
+    b' = ROTATE (b ^ c') 12
     a'' = a' + b'
-    d'' = (d' ^ a'') <<< 0x8
+    d'' = ROTATE (d' ^ a'') 8
     c'' = c' + d''
-    b'' = (b' ^ c'') <<< 0x7
+    b'' = ROTATE (b' ^ c'') 7
 
 ROUND : [16][32] -> [16][32]
 ROUND [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15] = 
@@ -42,19 +42,17 @@ chacha20_core input = output'
             u = u',
             c = c'
           }
-          //input' = (iterate ROUND input) @ 10
-          //input' = ROUND input
-          input1 = ROUND input
-          input2 = ROUND input1
-          input3 = ROUND input2
-          input4 = ROUND input3
-          input5 = ROUND input4
-          input6 = ROUND input5
-          input7 = ROUND input6
-          input8 = ROUND input7
-          input9 = ROUND input8
-          input10 = ROUND input9
-
+          input10 = (iterate ROUND input) @ 10
+        //   input1 = ROUND input
+        //   input2 = ROUND input1
+        //   input3 = ROUND input2
+        //   input4 = ROUND input3
+        //   input5 = ROUND input4
+        //   input6 = ROUND input5
+        //   input7 = ROUND input6
+        //   input8 = ROUND input7
+        //   input9 = ROUND input8
+        //   input10 = ROUND input9
           u' = [ (input @ i) + (input10 @ i) | i <- [0 .. 15] ] 
           c' = (join [ reverse (groupBy`{8} (u'@i))| i <- [0 .. 15] ])
 
@@ -110,6 +108,7 @@ ChaCha20_ctr32s inp key counter = out1
           bufs' = (drop`{1} bufs)
           bufsc = [ bu.c | bu <- bufs'] 
           out1 = inp ^ (join bufsc)
+
 
 tcounter = [0x00000001, 0x00000000, 0x4a000000, 0x00000000]
 tinp = [0x4c,0x61,0x64,0x69,0x65,0x73,0x20,0x61,0x6e,0x64,0x20,0x47,0x65,0x6e,0x74,0x6c,0x65,0x6d,0x65,0x6e,0x20,0x6f,0x66,0x20,0x74,0x68,0x65,0x20,0x63,0x6c,0x61,0x73,0x73,0x20,0x6f,0x66,0x20,0x27,0x39,0x39,0x3a,0x20,0x49,0x66,0x20,0x49,0x20,0x63,0x6f,0x75,0x6c,0x64,0x20,0x6f,0x66,0x66,0x65,0x72,0x20,0x79,0x6f,0x75,0x20,0x6f,0x6e,0x6c,0x79,0x20,0x6f,0x6e,0x65,0x20,0x74,0x69,0x70,0x20,0x66,0x6f,0x72,0x20,0x74,0x68,0x65,0x20,0x66,0x75,0x74,0x75,0x72,0x65,0x2c,0x20,0x73,0x75,0x6e,0x73,0x63,0x72,0x65,0x65,0x6e,0x20,0x77,0x6f,0x75,0x6c,0x64,0x20,0x62,0x65,0x20,0x69,0x74,0x2e]
@@ -186,7 +185,7 @@ QUARTERROUND2 input a b c d = input' where
 //         todo = 64
 //         newbuf = chacha20_core buf input
 //         inp64 = get64 inp i
-//         newout1 = [ ((inp64@j) ^ ((newbuf.c)@j)) | j <- [0..63]]     //看看
+//         newout1 = [ ((inp64@j) ^ ((newbuf.c)@j)) | j <- [0..63]]     
 //         input' = change_input input
 //         i' = i + 1
 //         newout' = if (i' * 64) < len then newout1 # (chacha20_ctr32 inp len input' newbuf i')
@@ -212,7 +211,7 @@ QUARTERROUND2 input a b c d = input' where
 //   where 
 //         todo = 64
 //         newbuf = chacha20_core buf input
-//         newout1 = [ ((inp@i) ^ ((newbuf.c)@i)) | i <- [0..63]]     //看看
+//         newout1 = [ ((inp@i) ^ ((newbuf.c)@i)) | i <- [0..63]]     
 //         newout2 = (drop`{64} newout1) 
 //         inp' =  (drop`{64} inp)
 //         len' = len - todo

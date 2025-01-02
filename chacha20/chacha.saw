@@ -1,4 +1,5 @@
 import "chacha_openssl.cry";
+import "chacha.cry";
 llvm <- llvm_load_module "chacha.bc";
 
 // Helper function for allocating memory for symbolic variables
@@ -15,7 +16,7 @@ let ptr_to_fresh name typ = do {
 };
 
 
-
+//chacha20_core
 let chacha20_core_setup = do {
     (arr,arrp) <- ptr_to_fresh "array" (llvm_array 16 (llvm_int 32)); 
 
@@ -31,7 +32,11 @@ let chacha20_core_setup = do {
 chacha20_cores <- llvm_verify llvm "chacha20_core" [] false chacha20_core_setup yices;
 
 
-
+// let check_ChaCha20Equal n = do {
+//     print (str_concat "Checking ChaCha20 equivalent for byte count " (show n));
+//     time (prove_print yices {{ ChaCha20Equal : [256] -> [32] -> [96] -> [n][8] -> Bit }});
+// };
+// for [300, 400] check_ChaCha20Equal;
 
 // let chacha20_core_setup = do {
 //     (arr,arrp) <- ptr_to_fresh "array" (llvm_array 16 (llvm_int 32));  //第一个是cryptol参数第二个是c参数
@@ -50,21 +55,31 @@ chacha20_cores <- llvm_verify llvm "chacha20_core" [] false chacha20_core_setup 
 
 // chacha20_cores <- llvm_verify llvm "chacha20_core" [] false chacha20_core_setup yices;
 
-
+//ChaCha20_ctr32
 let ChaCha20_ctr32_setup n = do {
     (out, outp) <- ptr_to_fresh "out" (llvm_array n (llvm_int 8));
     (inp, inpp) <- ptr_to_fresh "inp" (llvm_array n (llvm_int 8));
     (key,keyp) <- ptr_to_fresh "key" (llvm_array 8 (llvm_int 32));
     (counter,counterp) <- ptr_to_fresh "counter" (llvm_array 4 (llvm_int 32));
-    let nt = {{`n  : [64]}};
+    let np = {{`n  : [64]}};
 
-    llvm_execute_func [outp, inpp, (llvm_term nt), keyp, counterp];
+    llvm_execute_func [outp, inpp, (llvm_term np), keyp, counterp];
     let out' = {{ChaCha20_ctr32 inp key counter}};
     llvm_points_to outp (llvm_term out');
 };
 
+let check_ChaCha20_ctr32 n = do {
+    print (str_concat "Checking C Code and Cryptol Spec equivalent for byte count " (show n));
+    time(llvm_verify llvm "ChaCha20_ctr32" [] true (ChaCha20_ctr32_setup n) yices);
+};
+
+let ns = (eval_list {{ [7..8:[16]] }});
+for ns (\n -> check_ChaCha20_ctr32 (eval_int n));
+
+
+
+
 //for [8, 300] ChaCha20_ctr32_setup; 16384 131072
-time(llvm_verify llvm "ChaCha20_ctr32" [] true (ChaCha20_ctr32_setup (1024)) yices);
 
 
 // let chacha20_core_setup = do {

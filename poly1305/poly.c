@@ -192,20 +192,20 @@ void poly1305_emit(void *ctx, unsigned char mac[16],
     U32TO8(mac + 12, h3);
 }
 
-int main()
-{
-    char testInput[16] = {0, 0, 0, 0, 0, 0, 0, 0, 252, 255, 255, 15, 252, 255, 255, 15};
-    long long opaque[24] = {0,5,5,0,18446744069414584320,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    poly1305_init(&opaque, testInput);
+// int main()
+// {
+//     char testInput[16] = {0, 0, 0, 0, 0, 0, 0, 0, 252, 255, 255, 15, 252, 255, 255, 15};
+//     long long opaque[24] = {0,5,5,0,18446744069414584320,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+//     poly1305_init(&opaque, testInput);
     
-    for(int i = 0; i < 24; i++){
-        // unsigned char bytes[sizeof(double)];
-        // // 将 double 类型的值复制到字节数组中
-        // memcpy(bytes, &opaque[i], sizeof(double));
-        // for (int i = sizeof(double) - 1; i >= 0; i--) {
-        //     printf("%02x", bytes[i]);
-        // }
-        // printf("\n");
-        printf("%llx\n", opaque[i]);
-    }
-}
+//     for(int i = 0; i < 24; i++){
+//         // unsigned char bytes[sizeof(double)];
+//         // // 将 double 类型的值复制到字节数组中
+//         // memcpy(bytes, &opaque[i], sizeof(double));
+//         // for (int i = sizeof(double) - 1; i >= 0; i--) {
+//         //     printf("%02x", bytes[i]);
+//         // }
+//         // printf("\n");
+//         printf("%llx\n", opaque[i]);
+//     }
+// }

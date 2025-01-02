@@ -2,8 +2,10 @@ import chacha_openssl
 import chacha_rfc 
 import chacharfc2
 
-ChaCha20Equal : {a} (fin a) => [256] -> [32] -> [96] -> [a][8] -> Bit
-property ChaCha20Equal k i n msg = ChaCha20EncryptSSL (chakey k) i (chacounter n) msg == ChaCha20Encrypt k i n msg
+ChaCha20Equal : {a} (fin a) => 
+    [256] -> [32] -> [96] -> [a][8] -> Bit
+property ChaCha20Equal k i n msg = 
+    ChaCha20EncryptSSL (chakey k) i (chacounter n) msg == ChaCha20Encrypt k i n msg
 //:prove ChaCha20Equal : [256] -> [32] -> [96] -> [64][8] -> Bit
 
 
