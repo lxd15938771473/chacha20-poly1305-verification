@@ -15,7 +15,7 @@ let ptr_to_fresh name typ = do {
 };
 
 let U8TOU32_setup = do {
-    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 4 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 4 (llvm_int 8)); 
     llvm_execute_func [arrp];
     let arr' = {{ U8TOU32 arr }};
     llvm_return (llvm_term {{arr'}});
@@ -27,9 +27,9 @@ u8tou32 <- llvm_verify llvm "U8TOU32" [] false U8TOU32_setup yices;
 
 
 let U32TO8_setup = do {
-    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 4 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (arr,arrp) <- ptr_to_fresh "array" (llvm_array 4 (llvm_int 8)); 
     v <- llvm_fresh_var "v" (llvm_int 32);
-    llvm_execute_func [arrp, llvm_term v];           //非指针要这样声明
+    llvm_execute_func [arrp, llvm_term v];         
     let v' = {{ U32TO8 v }};
     llvm_points_to arrp (llvm_term v');
 };
@@ -38,7 +38,7 @@ u32tou8 <- llvm_verify llvm "U32TO8" [] false U32TO8_setup yices;
 
 
 let poly1305_init_setup = do {
-    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8)); 
     poly1305_internal <- llvm_alloc (llvm_struct "struct.poly1305_internal");
     poly1305_internal_h <- llvm_fresh_var "h" (llvm_array 5 (llvm_int 32));
     poly1305_internal_r <- llvm_fresh_var "r" (llvm_array 4 (llvm_int 32));
@@ -54,7 +54,7 @@ let poly1305_init_setup = do {
 
 
 // let poly1305_init_setup = do {
-//     (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+//     (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  
 //     poly1305_internal <- llvm_alloc (llvm_struct "struct.poly1305_internal");
 //     poly1305_internal_h <- llvm_fresh_var "h" (llvm_array 5 (llvm_int 32));
 //     poly1305_internal_r <- llvm_fresh_var "r" (llvm_array 4 (llvm_int 32));
@@ -80,7 +80,7 @@ let poly1305_init_setup = do {
 //time(llvm_verify llvm "poly1305_init" [u8tou32] false poly1305_init_setup (w4_unint_z3 []));
 
 let poly1305_init2_setup = do {
-    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  
     (opaque,opaquep) <- ptr_to_fresh "opaque" (llvm_array 24 (llvm_int 64));
     llvm_execute_func [opaquep, keyp];
     let opaque' = {{ poly1305_init2 opaque key}};

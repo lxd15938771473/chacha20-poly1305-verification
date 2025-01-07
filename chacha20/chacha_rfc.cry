@@ -1,3 +1,9 @@
+// You can freely use this source code for educational purposes.
+//% ChaCha20 and Poly1305 for IETF protocols 
+//% Y. Nir (Check Point), A. Langley (Google Inc), D. McNamee (Galois, Inc) 
+//% July 28, 2014
+// www.cryptol.net
+
 module chacha_rfc where
 
 type ChaChaState = [16][32]

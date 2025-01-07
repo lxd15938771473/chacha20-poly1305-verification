@@ -28,16 +28,16 @@ u8tou64 <- llvm_verify llvm "U8TOU64" [] false U8TOU64_setup yices;
 let U64TO8_setup = do {
     (arr,arrp) <- ptr_to_fresh "array" (llvm_array 8 (llvm_int 8));  
     v <- llvm_fresh_var "v" (llvm_int 64);
-    llvm_execute_func [arrp, llvm_term v];           //非指针要这样声明
+    llvm_execute_func [arrp, llvm_term v];          
     let v' = {{ U64TO8 v }};
     llvm_points_to arrp (llvm_term v');
 };
 
-u64to8 <- llvm_verify llvm "U64TO8" [] false U64TO8_setup yices;
+u64to8 <- llvm_verify llvm "U64TO8" [] false U64TO8_setup abc;
 
 
 let poly1305_init_setup = do {
-    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8)); 
     poly1305_internal <- llvm_alloc (llvm_struct "struct.poly1305_internal");
     poly1305_internal_h <- llvm_fresh_var "h" (llvm_array 3 (llvm_int 64));
     poly1305_internal_r <- llvm_fresh_var "r" (llvm_array 2 (llvm_int 64));
@@ -50,7 +50,7 @@ let poly1305_init_setup = do {
     llvm_points_to (llvm_field poly1305_internal "r") (llvm_term {{ poly1305_internal''.r }});
 };
 
-llvm_verify llvm "poly1305_init" [] false poly1305_init_setup yices;
+llvm_verify llvm "poly1305_init" [] false poly1305_init_setup abc;
 
 let poly1305_blocks_setup n = do {
     poly1305_internal <- llvm_alloc (llvm_struct "struct.poly1305_internal");
@@ -60,7 +60,7 @@ let poly1305_blocks_setup n = do {
     llvm_points_to (llvm_field poly1305_internal "r") (llvm_term poly1305_internal_r);
     padbit <- llvm_fresh_var "padbit" (llvm_int 32);
     (inp, inpp) <- ptr_to_fresh "inp" (llvm_array n (llvm_int 8));
-    llvm_execute_func [poly1305_internal, inpp, llvm_term {{`n:[64]}}, llvm_term padbit];          //要使用`n
+    llvm_execute_func [poly1305_internal, inpp, llvm_term {{`n:[64]}}, llvm_term padbit];         
     let poly1305_internal' = {{ {h = poly1305_internal_h, r = poly1305_internal_r} }};
     let poly1305_internal'' = {{ poly1305_blocks poly1305_internal' inp padbit }};
     llvm_points_to (llvm_field poly1305_internal "h") (llvm_term {{ poly1305_internal''.h }});
@@ -71,14 +71,14 @@ let poly1305_blocks_setup n = do {
 
 let check_poly1305_blocks n = do {
     print (str_concat "Checking C Code and Cryptol Spec equivalent for byte count " (show n));
-    time(llvm_verify llvm "poly1305_blocks" [] true (poly1305_blocks_setup n) yices);
+    time(llvm_verify llvm "poly1305_blocks" [] true (poly1305_blocks_setup n) abc);
 };
 
 let ns = (eval_list {{ [128..129:[16]] }});
 for ns (\n -> check_poly1305_blocks (eval_int n));
 
 let poly1305_emit_setup = do {
-    (mac, macp) <- ptr_to_fresh "mac" (llvm_array 16 (llvm_int 8));  //第一个是cryptol参数第二个是c参数
+    (mac, macp) <- ptr_to_fresh "mac" (llvm_array 16 (llvm_int 8));  
     (nonce, noncep) <- ptr_to_fresh "nonce" (llvm_array 4 (llvm_int 32)); 
     poly1305_internal <- llvm_alloc (llvm_struct "struct.poly1305_internal");
     poly1305_internal_h <- llvm_fresh_var "h" (llvm_array 3 (llvm_int 64));
@@ -92,4 +92,4 @@ let poly1305_emit_setup = do {
     llvm_points_to macp (llvm_term mac');
 };
 
-llvm_verify llvm "poly1305_emit" [] false poly1305_emit_setup yices;
+llvm_verify llvm "poly1305_emit" [] false poly1305_emit_setup abc;

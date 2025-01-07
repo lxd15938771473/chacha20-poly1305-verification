@@ -58,30 +58,6 @@ chacha20_core input = output'
 
 
 
-
-// chacha20_core : Chacha_buf -> [16][32]  -> Chacha_buf
-// chacha20_core output input = output' 
-//     where output' = {
-//             u = output.u,
-//             c = c'
-//           }
-//           //input' = (iterate ROUND input) @ 10
-//           //input' = ROUND input
-//           input1 = ROUND input
-//           input2 = ROUND input1
-//           input3 = ROUND input2
-//           input4 = ROUND input3
-//           input5 = ROUND input4
-//           input6 = ROUND input5
-//           input7 = ROUND input6
-//           input8 = ROUND input7
-//           input9 = ROUND input8
-//           input10 = ROUND input9
-
-//           u' = [ (input @ i) + (input10 @ i) | i <- [0 .. 15] ] 
-//           c' = (join [ reverse (groupBy`{8} (u'@i))| i <- [0 .. 15] ])
-
-
 extInp : {n, k}(fin n, k == 64 - (n % 64)) => [n][8] -> [n + k][8]
 extInp inp = reverse (groupBy`{8} (zext (join (reverse inp))))
 
@@ -114,20 +90,20 @@ tcounter = [0x00000001, 0x00000000, 0x4a000000, 0x00000000]
 tinp = [0x4c,0x61,0x64,0x69,0x65,0x73,0x20,0x61,0x6e,0x64,0x20,0x47,0x65,0x6e,0x74,0x6c,0x65,0x6d,0x65,0x6e,0x20,0x6f,0x66,0x20,0x74,0x68,0x65,0x20,0x63,0x6c,0x61,0x73,0x73,0x20,0x6f,0x66,0x20,0x27,0x39,0x39,0x3a,0x20,0x49,0x66,0x20,0x49,0x20,0x63,0x6f,0x75,0x6c,0x64,0x20,0x6f,0x66,0x66,0x65,0x72,0x20,0x79,0x6f,0x75,0x20,0x6f,0x6e,0x6c,0x79,0x20,0x6f,0x6e,0x65,0x20,0x74,0x69,0x70,0x20,0x66,0x6f,0x72,0x20,0x74,0x68,0x65,0x20,0x66,0x75,0x74,0x75,0x72,0x65,0x2c,0x20,0x73,0x75,0x6e,0x73,0x63,0x72,0x65,0x65,0x6e,0x20,0x77,0x6f,0x75,0x6c,0x64,0x20,0x62,0x65,0x20,0x69,0x74,0x2e]
 tkey = [0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c, 0x13121110, 0x17161514, 0x1b1a1918, 0x1f1e1d1c]
 // tinput = ([0x61707865, 0x3320646e, 0x79622d32, 0x6b206574] # tkey # counter)
+buf = {
+        u = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        c = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      }
 
-
-// GetKeySequence :  [8][32] -> [4][32] -> [2048000]
-// GetKeySequence input key counter = bufsc
-//     where buf = {
-//             u = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-//             c = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-//           }
-//           input = ([0x61707865, 0x3320646e, 0x79622d32, 0x6b206574] # key # counter)
-//           inputs = [input] # [ change_input in | in <- inputs | i <- [1..4000] ]
-//           inputs' = (take`{4000} inputs)
-//           bufs = [buf] # [ chacha20_core in | in <- inputs' ]
-//           bufs' = (drop`{1} bufs)
-//           bufsc = (join (join [ bu.c | bu <- bufs']))
+GetKeySequence : Chacha_buf -> [8][32] -> [4][32] -> [5120000]
+GetKeySequence buf key counter = bufsc
+    where 
+          input = ([0x61707865, 0x3320646e, 0x79622d32, 0x6b206574] # key # counter)
+          inputs = [input] # [ change_input in | in <- inputs | i <- [1..10000] ]
+          inputs' = (take`{10000} inputs)
+          bufs = [buf] # [ chacha20_core in | in <- inputs' ]
+          bufs' = (drop`{1} bufs)
+          bufsc = (join (join [ bu.c | bu <- bufs']))
           
 
 QUARTERROUND2 : [16][32] -> [32] -> [32] -> [32] -> [32] -> [16][32]
@@ -159,12 +135,6 @@ QUARTERROUND2 input a b c d = input' where
 //           bufs' = (drop`{1} bufs)
 //           bufsc = [ bu.c | bu <- bufs'] 
 //           out1 = inp ^ (join bufsc)
-
-
-
-
-
-
 
 // u32tou64 : {n, m}(fin n, m == (n / 256), n >= 256) => [n] -> [m*64][8]
 // u32tou64 x = (groupBy`{8} (zext x))
@@ -243,8 +213,6 @@ QUARTERROUND2 input a b c d = input' where
 //            state2    = workstate + state
 
 
-// //ChaCha20块功能用于将密钥扩展为密钥流
-// //序列化
 // Serialize : ChaChaState -> Block
 // Serialize state = block
 //      where block = groupBy`{8} (join state)
@@ -253,8 +221,6 @@ QUARTERROUND2 input a b c d = input' where
 // Serializes states = blocks
 //      where blocks = groupBy`{8}(join (join states))
 
-
-// //迭代密钥流
 // Key_stream : ChaChaState -> [inf][8]
 // Key_stream state = groupBy`{8} (join (join [ ChaCha20' (ChaChaAdd state i)| i <- [0, 1 ... ] ]))
 
@@ -262,7 +228,7 @@ QUARTERROUND2 input a b c d = input' where
 // ChaCha20_ctr32 : [8][32] -> [4][32] -> [n][8] -> [16][32]
 // ChaCha20_ctr32 key counter inp = input
 //    where input = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574] # key # counter
-//          key_stream = take`{n}(Key_stream state) //生成密钥         //while == ChaCha20' (ChaChaAdd state i)
+//          key_stream = take`{n}(Key_stream state)          //while == ChaCha20' (ChaChaAdd state i)
 //          ciphertext = key_stream ^ plaintext
                  
                  
