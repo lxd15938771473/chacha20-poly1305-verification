@@ -1,2 +1,0 @@
-:l chacha_openssl.cry
-GetKeySequence buf tkey tcounter

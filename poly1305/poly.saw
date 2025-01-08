@@ -46,11 +46,11 @@ let poly1305_init_setup = do {
     llvm_points_to (llvm_field poly1305_internal "r") (llvm_term poly1305_internal_r);
 
     llvm_execute_func [poly1305_internal, keyp];
-    // let poly1305_internal' = {{ {h = poly1305_internal_h, r = poly1305_internal_r} }};
     let poly1305_internal'' = {{ poly1305_init key}};
     llvm_points_to (llvm_field poly1305_internal "h") (llvm_term {{ poly1305_internal''.h }});
     llvm_points_to (llvm_field poly1305_internal "r") (llvm_term {{ poly1305_internal''.r }});
 };
+time(llvm_verify llvm "poly1305_init" [u8tou32] false poly1305_init_setup (w4_unint_z3 []));
 
 
 // let poly1305_init_setup = do {
@@ -79,13 +79,13 @@ let poly1305_init_setup = do {
 
 //time(llvm_verify llvm "poly1305_init" [u8tou32] false poly1305_init_setup (w4_unint_z3 []));
 
-let poly1305_init2_setup = do {
-    (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  
-    (opaque,opaquep) <- ptr_to_fresh "opaque" (llvm_array 24 (llvm_int 64));
-    llvm_execute_func [opaquep, keyp];
-    let opaque' = {{ poly1305_init2 opaque key}};
-    llvm_points_to opaquep (llvm_term opaque');
-};
+// let poly1305_init2_setup = do {
+//     (key,keyp) <- ptr_to_fresh "key" (llvm_array 16 (llvm_int 8));  
+//     (opaque,opaquep) <- ptr_to_fresh "opaque" (llvm_array 24 (llvm_int 64));
+//     llvm_execute_func [opaquep, keyp];
+//     let opaque' = {{ poly1305_init2 opaque key}};
+//     llvm_points_to opaquep (llvm_term opaque');
+// };
 
 //time(llvm_verify llvm "poly1305_init" [u8tou32] false poly1305_init2_setup (w4_unint_z3 []));
 
@@ -110,7 +110,7 @@ let check_poly1305_blocks n = do {
     time(llvm_verify llvm "poly1305_blocks" [] true (poly1305_blocks_setup n) yices);
 };
 
-let ns = (eval_list {{ [128..129:[16]] }});
+let ns = (eval_list {{ [512..1024:[16]] }});
 for ns (\n -> check_poly1305_blocks (eval_int n));
 
 let poly1305_emit_setup = do {
@@ -130,26 +130,3 @@ let poly1305_emit_setup = do {
 
 time(llvm_verify llvm "poly1305_emit" [] false poly1305_emit_setup z3);
 
-// let Poly1305_Init_setup = do {
-    
-//     poly1305_context <- llvm_alloc (llvm_struct "struct.poly1305_context");
-//     poly1305_context_opaque <- llvm_fresh_var "opaque" (llvm_array 24 (llvm_int 64));
-//     poly1305_context_nonce <- llvm_fresh_var "nonce" (llvm_array 4 (llvm_int 32));
-//     poly1305_context_data <- llvm_fresh_var "data" (llvm_array 16 (llvm_int 8));
-//     poly1305_context_num <- llvm_fresh_var "num" (llvm_int 64);
-//     llvm_points_to (llvm_field poly1305_context "opaque") (llvm_term poly1305_context_opaque);
-//     llvm_points_to (llvm_field poly1305_context "nonce") (llvm_term poly1305_context_nonce);
-//     llvm_points_to (llvm_field poly1305_context "data") (llvm_term poly1305_context_data);
-//     llvm_points_to (llvm_field poly1305_context "num") (llvm_term poly1305_context_num);
-//     (key,keyp) <- ptr_to_fresh "key" (llvm_array 32 (llvm_int 8)); 
-
-//     llvm_execute_func [poly1305_context, keyp];
-//     let poly1305_context' = {{ { opaque = poly1305_context_opaque, nonce = poly1305_context_nonce, 
-//                                     data = poly1305_context_data, num = poly1305_context_num } }};
-//     let poly1305_context'' = {{ Poly1305_Init poly1305_context' key }};
-//     llvm_points_to (llvm_field poly1305_context "opaque") (llvm_term {{ poly1305_context''.opaque }});      
-// };
-//time(llvm_verify llvm "Poly1305_Init" [] false Poly1305_Init_setup (w4_unint_z3 []));
-
-
-// llvm_verify mod "f" [] true (f_setup 3 5) z3;

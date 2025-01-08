@@ -1,4 +1,4 @@
-module poly where 
+module poly_openssl where 
 
 type u8 = [8]
 type u32 = [32]

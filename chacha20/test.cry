@@ -1,9 +1,0 @@
-Loading module Cryptol
-Loading module Cryptol
-Loading module chacha_openssl
-[warning] at chacha_openssl.cry:76:11--76:14
-    This binding for `buf` shadows the existing binding at
-    chacha_openssl.cry:93:1--93:4
-[warning] at chacha_openssl.cry:99:16--99:19
-    This binding for `buf` shadows the existing binding at
-    chacha_openssl.cry:93:1--93:4

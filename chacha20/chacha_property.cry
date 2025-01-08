@@ -1,55 +1,32 @@
+module chacha_property where
+
 import chacha_openssl
 import chacha_rfc
+
+
 
 //property1
 ChaChaCorrect : {n}(fin n) => [n][8] -> [8][32] -> [4][32] -> Bit
 property ChaChaCorrect inp key counter = (ChaCha20_ctr32 (ChaCha20_ctr32 inp key counter) key counter) == inp 
 // :prove ChaChaCorrect : [64][8] -> [8][32] -> [4][32] -> Bit
 
+
 //property2
-chacha20_coreDiff : [16][32] -> [16][32] -> Bit
-property chacha20_coreDiff inp1 inp2 = if chacha20_core inp1 != chacha20_core inp2 
-                                       then inp1 != inp2
-                                       else True 
-//:prove chacha20_coreDiff :  [16][32] -> [16][32] -> Bit
-
-
-chacha20_coreDifff : [16][32] -> [16][32] -> Bit
-property chacha20_coreDifff inp1 inp2 = if chacha20_core inp1 == chacha20_core inp2 
-                                           then inp1 == inp2
-                                        else True 
-//:prove chacha20_coreDifff :  [16][32] -> [16][32] -> Bit
-
-chacha20_coreDiff4 : [16][32] -> [16][32] -> Bit
-property chacha20_coreDiff4 inp1 inp2 = chacha20_coreDiff2 inp1 inp2 == chacha20_coreDiff inp1 inp2
-//:prove chacha20_coreDiff4 : [16][32] -> [16][32] -> Bit
-
-//property3
 ChaChaDiffInp : {n}(fin n) => [n][8] -> [n][8] -> [8][32] -> [4][32] -> Bit
-property ChaChaDiffInp  inp1 inp2 key counter = if inp1 != inp2 
-                                                then (ChaCha20_ctr32  inp1  key counter) !=  (ChaCha20_ctr32 inp2  key counter)
+property ChaChaDiffInp  inp1 inp2 key counter = if (ChaCha20_ctr32  inp1  key counter) !=  (ChaCha20_ctr32 inp2  key counter)
+                                                then inp1 != inp2
                                                 else True
 //:prove ChaChaDiffInp : [64][8] -> [64][8] -> [8][32] -> [4][32] -> Bit
 
-//property4
+//property2
 ChaChaDiffKey : {n}(fin n) => [n][8] -> [8][32] -> [8][32] -> [4][32] -> Bit
-property ChaChaDiffKey inp key1 key2 counter = if key1 != key2
-                                               then (ChaCha20_ctr32 inp key1 counter) !=  (ChaCha20_ctr32 inp key2 counter)
+property ChaChaDiffKey inp key1 key2 counter = if (ChaCha20_ctr32 inp key1 counter) !=  (ChaCha20_ctr32 inp key2 counter)
+                                               then key1 != key2
                                                else True
 //:prove ChaChaDiffKey : [64][8] -> [8][32] -> [8][32] -> [4][32] -> Bit
 
-//property5
-ChaChaDiffCounter : {n}(fin n) => [n][8] -> [8][32] -> [4][32] -> [4][32] -> Bit
-property ChaChaDiffCounter inp key counter1 counter2 = if (ChaCha20_ctr32 inp key counter1) !=  (ChaCha20_ctr32 inp key counter2)
-                                                       then counter1 != counter2 
-                                                       else True
-//:prove ChaChaDiffCounter : [64][8] -> [8][32] -> [4][32] -> [4][32] -> Bit
 
-//property7
-ChaCha20Decrypt3 : [8][32] -> Bit
-property ChaCha20Decrypt3 key = ChaCha20_ctr32 tinp key tcounter == tout
-//:sat ChaCha20Decrypt3 : [8][32] -> Bit
-
+//property3
 ChaChaimp : {n}(fin n) => [n][8] -> [n][8] -> [8][32] -> [8][32]-> [4][32] -> [4][32] -> Bit
 property ChaChaimp inp1 inp2 key1 key2 counter1 counter2 = if (ChaCha20_ctr32 inp1 key1 counter1) !=  (ChaCha20_ctr32 inp2 key2 counter2)
                                                        then (counter1 != counter2 \/ key1 != key2 \/ inp1 != inp2)
@@ -57,49 +34,15 @@ property ChaChaimp inp1 inp2 key1 key2 counter1 counter2 = if (ChaCha20_ctr32 in
 //:prove ChaChaimp : [64][8] -> [64][8] -> [8][32] -> [8][32] -> [4][32] -> [4][32] -> Bit
 
 
-
-
-ChaChaDiff : {n}(fin n) => [n][8] -> [n][8] -> [8][32] -> [8][32] -> [4][32] -> [4][32] -> Bit
-property ChaChaDiff inp1 inp2 key1 key2 counter1 counter2 = if (ChaCha20_ctr32 inp1 key1 counter1) ==  (ChaCha20_ctr32 inp2 key2 counter2)
-                                                             then (counter1 == counter2 /\ inp1 == inp2 /\ inp1 == inp2)
-                                                             else True
-//:prove ChaChaDiff : [64][8] -> [64][8] -> [8][32] -> [8][32] -> [4][32] -> [4][32] -> Bit
-
-
-
-chacha20_coreDiff2 : [16][32] -> [16][32] -> Bit
-property chacha20_coreDiff2 inp1 inp2 = if inp1 != inp2 
-                                        then chacha20_core inp1 != chacha20_core inp2
-                                        else True 
-//:prove chacha20_coreDiff2 : [16][32] -> [16][32] -> Bit
-
-
-
-
-chacha20_coreDiff3 : [16][32] -> [16][32] -> Bit
-property chacha20_coreDiff3 inp1 inp2 = (chacha20_core inp1 == chacha20_core inp2) /\ (inp1 != inp2)
-//:prove chacha20_coreDiff3 : [16][32] -> [16][32] -> Bit
-
-
-
-ChaCha20BlockDiff : ChaChaKey -> [96] -> ChaChaKey -> [96] -> Bit
-property ChaCha20BlockDiff key1 nonce1 key2 nonce2 = if ChaCha20Block key1 nonce1 0 != ChaCha20Block key2 nonce2 0
-                                                      then (key1 != key2 \/ nonce1 != nonce2)
-                                                      else True
-//:prove ChaCha20BlockDiff : ChaChaKey -> [96] -> ChaChaKey -> [96] -> Bit
-
-ChaCha20BlockDiff2 : [96] -> [96] -> Bit
-property ChaCha20BlockDiff2 nonce1 nonce2 = if ChaCha20Block zero nonce1 0 == ChaCha20Block zero nonce2 0
-                                                      then nonce1 == nonce2
-                                                      else True
-//:prove ChaCha20BlockDiff2 : [96] -> [96] -> Bit
-
+//property4
+ChaChaDiffCounter : {n}(fin n) => [n][8] -> [8][32] -> [4][32] -> [4][32] -> Bit
+property ChaChaDiffCounter inp key counter1 counter2 = if counter1 != counter2
+                                                       then (ChaCha20_ctr32 inp key counter1) !=  (ChaCha20_ctr32 inp key counter2)
+                                                       else True
+//:prove ChaChaDiffCounter : [64][8] -> [8][32] -> [4][32] -> [4][32] -> Bit
 
 
 // ChaCha20Decrypt : [256][8] -> [8][32] -> [4][32] -> Bit
 // property ChaCha20Decrypt inp key nonce = ChaCha20_ctr32 inp key nonce == tout
 // //:sat ChaCha20Decrypt : [128][8] -> [8][32] -> [4][32] -> Bit
 
-// ChaCha20Decrypt2 : [256][8] -> [8][32] -> Bit
-// property ChaCha20Decrypt2 inp key = ChaCha20_ctr32 inp key tcounter == tout
-// //:sat ChaCha20Decrypt2 : [256][8] -> [8][32] -> Bit
