@@ -1,4 +1,4 @@
-module poly64 where 
+module poly_openssl64 where 
 
 type u8 = [8]
 type u32 = [32]
@@ -132,8 +132,8 @@ poly1305_emit st nonce = mace
           mace = mac0 # mac1
 
 //poly_mac testkey testi 1
-poly_mac : {n}(fin n, n>=16, 32 >= width n) => [32][8] -> [n][8] -> [16][8] 
-poly_mac key inp = mac 
+poly_mac2 : {n}(fin n, n>=16, 32 >= width n) => [32][8] -> [n][8] -> [16][8] 
+poly_mac2 key inp = mac 
     where st1 = poly1305_init (take`{16} key)
           st2 = poly1305_blocks st1 inp 1
           remain = `n % 16 

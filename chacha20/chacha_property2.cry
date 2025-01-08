@@ -1,12 +1,21 @@
+module chacha_property where
+
 import chacha_openssl
 import chacha_rfc 
-import chacharfc2
+import chacha_rfc2
+
+
+
+ChaCha_core_Correct : {n}(fin n) => [n][8] -> [8][32] -> [4][32] -> Bit
+property ChaCha_core_Correct inp key counter = (ChaCha20_ctr32 (ChaCha20_ctr32 inp key counter) key counter) == inp 
+// :prove ChaChaCorrect : [64][8] -> [8][32] -> [4][32] -> Bit
+
 
 ChaCha20Equal : {a} (fin a) => 
     [256] -> [32] -> [96] -> [a][8] -> Bit
 property ChaCha20Equal k i n msg = 
     ChaCha20EncryptSSL (chakey k) i (chacounter n) msg == ChaCha20Encrypt k i n msg
-//:prove ChaCha20Equal : [256] -> [32] -> [96] -> [64][8] -> Bit
+//:prove ChaCha20Equal : [256] -> [32] -> [96] -> [128][8] -> Bit
 
 
 ChaChaCorrect2 : {a} (fin a) => [256] -> [32] -> [96] -> [a][8] -> Bit
