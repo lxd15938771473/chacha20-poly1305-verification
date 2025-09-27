@@ -1,0 +1,345 @@
+enable_experimental;
+import "chacha_openhitls.cry";
+import "chacha_block.cry";
+
+llvm <- llvm_load_module "chacha20_combined.bc";
+
+let alloc_init ty v = do {
+    p <- llvm_alloc ty;
+    llvm_points_to p v;
+    return p;
+};
+
+let ptr_to_fresh n ty = do {
+    x <- llvm_fresh_var n ty;
+    p <- alloc_init ty (llvm_term x);
+    return (x, p);
+};
+
+
+//CRYPT_CHACHA20_SetKey
+let CRYPT_CHACHA20_SetKey_setup n = do {
+
+    
+    key <- llvm_fresh_var "key" (llvm_array n (llvm_int 8));
+    keyp <- llvm_alloc_readonly (llvm_array n (llvm_int 8));
+    llvm_points_to keyp (llvm_term key);
+    
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+
+    // CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "(CRYPT_CHACHA20_Ctx->1).0" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+    
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+
+    llvm_execute_func [CRYPT_CHACHA20_Ctxp, keyp, (llvm_term {{`n:[32]}})];
+    let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+    let CRYPT_CHACHA20_Ctx' = {{ CRYPT_CHACHA20_SetKey CRYPT_CHACHA20_Ctx key }};
+
+
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ CRYPT_CHACHA20_Ctx'.state }});
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ CRYPT_CHACHA20_Ctx'.lastLen }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ CRYPT_CHACHA20_Ctx'.set }});
+};
+time(llvm_verify llvm "CRYPT_CHACHA20_SetKey" [] false (CRYPT_CHACHA20_SetKey_setup 32) abc);
+
+
+//CRYPT_CHACHA20_SetNonce
+let CRYPT_CHACHA20_SetNonce_setup n = do {
+
+    
+    nonce <- llvm_fresh_var "nonce" (llvm_array n (llvm_int 8));
+    noncep <- llvm_alloc_readonly (llvm_array n (llvm_int 8));
+    llvm_points_to noncep (llvm_term nonce);
+    // k <- llvm_fresh_var "k" (llvm_array 32 (llvm_int 8));
+    // pk <- llvm_alloc_readonly (llvm_array 32 (llvm_int 8));
+    // llvm_points_to pk (llvm_term k);
+    
+    // let nt = llvm_term {{ `n : [32] }};
+    //(key,keypp) <- ptr_to_fresh "key" (llvm_array n (llvm_int 8)); 
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+    // CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "(CRYPT_CHACHA20_Ctx->1).0" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+    
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+
+    llvm_execute_func [CRYPT_CHACHA20_Ctxp, noncep, (llvm_term {{`n:[32]}})];
+    let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+    let CRYPT_CHACHA20_Ctx' = {{ CRYPT_CHACHA20_SetNonce CRYPT_CHACHA20_Ctx nonce }};
+
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ CRYPT_CHACHA20_Ctx'.state }});
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ CRYPT_CHACHA20_Ctx'.lastLen }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ CRYPT_CHACHA20_Ctx'.set }});
+};
+time(llvm_verify llvm "CRYPT_CHACHA20_SetNonce" [] false (CRYPT_CHACHA20_SetNonce_setup 12) abc);
+
+
+//CRYPT_CHACHA20_SetCount
+let CRYPT_CHACHA20_SetCount_setup n = do {
+
+    
+    cnt <- llvm_fresh_var "count" (llvm_array n (llvm_int 8));
+    cntp <- llvm_alloc_readonly (llvm_array n (llvm_int 8));
+    llvm_points_to cntp (llvm_term cnt);
+    // k <- llvm_fresh_var "k" (llvm_array 32 (llvm_int 8));
+    // pk <- llvm_alloc_readonly (llvm_array 32 (llvm_int 8));
+    // llvm_points_to pk (llvm_term k);
+    
+    // let nt = llvm_term {{ `n : [32] }};
+    //(key,keypp) <- ptr_to_fresh "key" (llvm_array n (llvm_int 8)); 
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+
+    // CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "(CRYPT_CHACHA20_Ctx->1).0" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+    
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+
+    llvm_execute_func [CRYPT_CHACHA20_Ctxp, cntp, (llvm_term {{`n:[32]}})];
+    let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+    let CRYPT_CHACHA20_Ctx' = {{ CRYPT_CHACHA20_SetCount CRYPT_CHACHA20_Ctx cnt }};
+
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ CRYPT_CHACHA20_Ctx'.state }});
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ CRYPT_CHACHA20_Ctx'.lastLen }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ CRYPT_CHACHA20_Ctx'.set }});
+};
+time(llvm_verify llvm "CRYPT_CHACHA20_SetCount" [] false (CRYPT_CHACHA20_SetCount_setup 4) abc);
+
+// let memcpy_s_setup = do {
+
+//     // let nt = llvm_term {{ `n : [32] }};
+//     //(key,keypp) <- ptr_to_fresh "key" (llvm_array n (llvm_int 8)); 
+//     // CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+//     (CRYPT_CHACHA20_Ctx_state,CRYPT_CHACHA20_Ctxp_state) <- ptr_to_fresh "state" (llvm_array 16 (llvm_int 32));
+//     CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+//     CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+
+//     // CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "(CRYPT_CHACHA20_Ctx->1).0" (llvm_array 16 (llvm_int 32));
+//     (CRYPT_CHACHA20_Ctx_c,CRYPT_CHACHA20_Ctxp_c) <- ptr_to_fresh "c" (llvm_array 16 (llvm_int 32));
+    
+//     // llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (CRYPT_CHACHA20_Ctxp_state);
+//     // llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+//     // llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+
+//     l1 <- llvm_fresh_var "l1" (llvm_int 64);
+//     l2 <- llvm_fresh_var "l2" (llvm_int 64);
+
+//     // llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (CRYPT_CHACHA20_Ctxp_c);
+
+//     llvm_execute_func [CRYPT_CHACHA20_Ctxp_c, (llvm_term l1), CRYPT_CHACHA20_Ctxp_state, (llvm_term l2)];
+//     let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctx_state, 
+//                                     last = { c = CRYPT_CHACHA20_Ctx_c },
+//                                     lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+//                                     set = CRYPT_CHACHA20_Ctxp_set } }};
+//     let CRYPT_CHACHA20_Ctx' = {{ memcpy_s CRYPT_CHACHA20_Ctx }};
+
+//     llvm_points_to (CRYPT_CHACHA20_Ctxp_c) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+// };
+// time(llvm_verify llvm "memcpy_s" [] false (memcpy_s_setup) abc);
+
+//CHACHA20_Block
+let CHACHA20_Block_setup = do {
+
+    // let nt = llvm_term {{ `n : [32] }};
+    //(key,keypp) <- ptr_to_fresh "key" (llvm_array n (llvm_int 8)); 
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+
+    // CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "(CRYPT_CHACHA20_Ctx->1).0" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+    
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+
+    llvm_execute_func [CRYPT_CHACHA20_Ctxp];
+    let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+    let CRYPT_CHACHA20_Ctx' = {{ CHACHA20_Block CRYPT_CHACHA20_Ctx }};
+
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ CRYPT_CHACHA20_Ctx'.state }});
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ CRYPT_CHACHA20_Ctx'.lastLen }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ CRYPT_CHACHA20_Ctx'.set }});
+};
+chacha_block <- time(llvm_verify llvm "CHACHA20_Block" [] false (CHACHA20_Block_setup) abc);
+
+//CHACHA20_Update
+let CHACHA20_Update_setup n = do {
+
+    
+    (inp, inpp) <- ptr_to_fresh "inp" (llvm_array n (llvm_int 8));
+    (out, outp) <- ptr_to_fresh "out" (llvm_array n (llvm_int 8));
+    
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+
+    //llvm_precond {{ CRYPT_CHACHA20_Ctxp_state == [ zero | _ <- [0 .. 15] ]}};
+    //llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 1) (llvm_term CRYPT_CHACHA20_Ctxp_u);
+
+    
+    llvm_execute_func [CRYPT_CHACHA20_Ctxp, inpp, outp, (llvm_term {{`n:[32]}})];
+    let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    //last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = (groupBy`{8} (join CRYPT_CHACHA20_Ctxp_c)) },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+    let t = {{ CHACHA20_Update CRYPT_CHACHA20_Ctx inp `n }};
+    llvm_points_to outp (llvm_term {{t.1}});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ t.0.state }});
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ t.0.last.c }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ t.0.lastLen }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ t.0.set }});
+};
+update <- time(llvm_verify llvm "CHACHA20_Update" [] false (CHACHA20_Update_setup 128) abc);
+
+//CRYPT_CHACHA20_Update
+let CRYPT_CHACHA20_Update_setup total_len k full_blocks remaining = do {
+
+    
+    (inp, inpp) <- ptr_to_fresh "inp" (llvm_array total_len (llvm_int 8));
+    (out, outp) <- ptr_to_fresh "out" (llvm_array total_len (llvm_int 8));
+
+    
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+
+    
+    //llvm_precond {{ CRYPT_CHACHA20_Ctxp_set == 0x03 }};
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+    //llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 1) (llvm_term CRYPT_CHACHA20_Ctxp_u);
+    llvm_precond {{ CRYPT_CHACHA20_Ctxp_lastLen == 0 }};
+    llvm_precond {{ CRYPT_CHACHA20_Ctxp_set == 0x03 }};
+    llvm_precond {{ CRYPT_CHACHA20_Ctxp_c == [ zero | _ <- [0 .. 15] ] }};
+
+    llvm_execute_func [CRYPT_CHACHA20_Ctxp, inpp, outp, (llvm_term {{`total_len:[32]}})];
+    let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    //last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = (groupBy`{8} (join CRYPT_CHACHA20_Ctxp_c)) },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+    let t = {{ CHACHA20_Update CRYPT_CHACHA20_Ctx inp `total_len }};
+    //let t = {{ CRYPT_CHACHA20_Update`{128, 64, 5} CRYPT_CHACHA20_Ctx inp `n }};
+
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ t.0.state }});
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ t.0.last.c }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ t.0.lastLen }});
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ t.0.set }});
+};
+time(llvm_verify llvm "CRYPT_CHACHA20_Update" [] false (CRYPT_CHACHA20_Update_setup 128 0 2 0) (abc));  
+
+ 
+
+
+//CRYPT_CHACHA20_Ctrl
+let CRYPT_CHACHA20_Ctrl_setup m = do {
+
+    CRYPT_CHACHA20_Ctxp <- llvm_alloc (llvm_alias "struct.CRYPT_CHACHA20_Ctx");
+    CRYPT_CHACHA20_Ctxp_state <- llvm_fresh_var "state" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_lastLen <- llvm_fresh_var "lastLen" (llvm_int 32);
+    CRYPT_CHACHA20_Ctxp_set <- llvm_fresh_var "set" (llvm_int 8);
+
+    // CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "(CRYPT_CHACHA20_Ctx->1).0" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_c <- llvm_fresh_var "c" (llvm_array 16 (llvm_int 32));
+    CRYPT_CHACHA20_Ctxp_u <- llvm_fresh_var "u" (llvm_array 64 (llvm_int 8));
+    
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term CRYPT_CHACHA20_Ctxp_state);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term CRYPT_CHACHA20_Ctxp_lastLen);
+    llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term CRYPT_CHACHA20_Ctxp_set);
+    llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term CRYPT_CHACHA20_Ctxp_c);
+
+    if eval_bool {{ `m == 0 }}
+      then do {
+        nonce <- llvm_fresh_var "nonce" (llvm_array 12 (llvm_int 8));
+        noncep <- llvm_alloc_readonly (llvm_array 12 (llvm_int 8));
+        llvm_points_to noncep (llvm_term nonce);
+        llvm_execute_func [CRYPT_CHACHA20_Ctxp, (llvm_term {{`m:[32]}}), noncep, (llvm_term {{12:[32]}})];
+        let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+        let CRYPT_CHACHA20_Ctx' = {{ CRYPT_CHACHA20_Ctrl_Nonce CRYPT_CHACHA20_Ctx `m nonce }};
+        llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ CRYPT_CHACHA20_Ctx'.state }});
+        llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+        llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ CRYPT_CHACHA20_Ctx'.lastLen }});
+        llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ CRYPT_CHACHA20_Ctx'.set }});
+        return ();
+      }
+    else do{
+        nonce <- llvm_fresh_var "nonce" (llvm_array 4 (llvm_int 8));
+        noncep <- llvm_alloc_readonly (llvm_array 4 (llvm_int 8));
+        llvm_points_to noncep (llvm_term nonce);
+        llvm_execute_func [CRYPT_CHACHA20_Ctxp, (llvm_term {{`m:[32]}}), noncep, (llvm_term {{4:[32]}})];
+        let CRYPT_CHACHA20_Ctx = {{ { state = CRYPT_CHACHA20_Ctxp_state, 
+                                    last = { c = CRYPT_CHACHA20_Ctxp_c, u = CRYPT_CHACHA20_Ctxp_u },
+                                    lastLen = CRYPT_CHACHA20_Ctxp_lastLen,
+                                    set = CRYPT_CHACHA20_Ctxp_set } }};
+        let CRYPT_CHACHA20_Ctx' = {{ CRYPT_CHACHA20_Ctrl_Count CRYPT_CHACHA20_Ctx `m nonce }};
+        llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "state") (llvm_term {{ CRYPT_CHACHA20_Ctx'.state }});
+        llvm_points_to (llvm_elem (llvm_elem CRYPT_CHACHA20_Ctxp 1) 0) (llvm_term {{ CRYPT_CHACHA20_Ctx'.last.c }});
+        llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "lastLen") (llvm_term {{ CRYPT_CHACHA20_Ctx'.lastLen }});
+        llvm_points_to (llvm_field CRYPT_CHACHA20_Ctxp "set") (llvm_term {{ CRYPT_CHACHA20_Ctx'.set }});
+      return ();
+    };                          
+};
+time(llvm_verify llvm "CRYPT_CHACHA20_Ctrl" [] false (CRYPT_CHACHA20_Ctrl_setup 3) abc);

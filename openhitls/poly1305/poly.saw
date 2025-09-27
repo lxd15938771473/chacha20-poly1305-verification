@@ -1,0 +1,70 @@
+enable_experimental;
+import "poly1305.cry";
+
+llvm <- llvm_load_module "noasm_poly1305.bc";
+
+let alloc_init ty v = do {
+    p <- llvm_alloc ty;
+    llvm_points_to p v;
+    return p;
+};
+
+let ptr_to_fresh n ty = do {
+    x <- llvm_fresh_var n ty;
+    p <- alloc_init ty (llvm_term x);
+    return (x, p);
+};
+
+
+let poly1305_blocks_setup n = do {
+    poly1305_internal <- llvm_alloc (llvm_struct "struct.Poly1305Ctx");
+    poly1305_internal_acc <- llvm_fresh_var "acc" (llvm_array 6 (llvm_int 32));
+    poly1305_internal_r <- llvm_fresh_var "r" (llvm_array 4 (llvm_int 32));
+    poly1305_internal_s <- llvm_fresh_var "s" (llvm_array 4 (llvm_int 32));
+    llvm_points_to (llvm_field poly1305_internal "acc") (llvm_term poly1305_internal_acc);
+    llvm_points_to (llvm_field poly1305_internal "r") (llvm_term poly1305_internal_r);
+    llvm_points_to (llvm_field poly1305_internal "s") (llvm_term poly1305_internal_s);
+    padbit <- llvm_fresh_var "padbit" (llvm_int 32);
+    (inp, inpp) <- ptr_to_fresh "inp" (llvm_array n (llvm_int 8));
+    llvm_execute_func [poly1305_internal, inpp, llvm_term {{`n:[32]}}, llvm_term padbit];          //used `n
+    let poly1305_internal' = {{ {acc = poly1305_internal_acc, r = poly1305_internal_r, s = poly1305_internal_s} }};
+    let poly1305_internal'' = {{ Poly1305Block poly1305_internal' inp padbit }};
+    llvm_points_to (llvm_field poly1305_internal "acc") (llvm_term {{ poly1305_internal''.acc }});
+    llvm_points_to (llvm_field poly1305_internal "r") (llvm_term {{ poly1305_internal''.r }});
+    llvm_points_to (llvm_field poly1305_internal "s") (llvm_term {{ poly1305_internal''.s }});
+};
+
+
+time(llvm_verify llvm "Poly1305Block" [] true (poly1305_blocks_setup 64) abc);
+
+// let check_poly1305_blocks n = do {
+//     print (str_concat "Checking C Code and Cryptol Spec equivalent for byte count " (show n));
+//     time(llvm_verify llvm "poly1305_blocks" [] true (poly1305_blocks_setup n) yices);
+// };
+// let ns = (eval_list {{ [512..1024:[16]] }});
+// for ns (\n -> check_poly1305_blocks (eval_int n));
+
+
+
+let poly1305_last_setup = do {
+    poly1305_internal <- llvm_alloc (llvm_struct "struct.Poly1305Ctx");
+    poly1305_internal_acc <- llvm_fresh_var "acc" (llvm_array 6 (llvm_int 32));
+    poly1305_internal_r <- llvm_fresh_var "r" (llvm_array 4 (llvm_int 32));
+    poly1305_internal_s <- llvm_fresh_var "s" (llvm_array 4 (llvm_int 32));
+    mac <- llvm_fresh_var "mac" (llvm_array 16 (llvm_int 8));
+    macp <- llvm_alloc (llvm_array 16 (llvm_int 8));
+    llvm_points_to macp (llvm_term mac);
+    llvm_points_to (llvm_field poly1305_internal "acc") (llvm_term poly1305_internal_acc);
+    llvm_points_to (llvm_field poly1305_internal "r") (llvm_term poly1305_internal_r);
+    llvm_points_to (llvm_field poly1305_internal "s") (llvm_term poly1305_internal_s);
+    llvm_execute_func [poly1305_internal, macp];          //used `n
+    let poly1305_internal' = {{ {acc = poly1305_internal_acc, r = poly1305_internal_r, s = poly1305_internal_s} }};
+    let mac' = {{ Poly1305Last poly1305_internal' }};
+    llvm_points_to macp (llvm_term mac');
+    llvm_points_to (llvm_field poly1305_internal "acc") (llvm_term {{ poly1305_internal''.acc }});
+    llvm_points_to (llvm_field poly1305_internal "r") (llvm_term {{ poly1305_internal''.r }});
+    llvm_points_to (llvm_field poly1305_internal "s") (llvm_term {{ poly1305_internal''.s }});
+};
+
+
+time(llvm_verify llvm "Poly1305Last" [] true (poly1305_last_setup) abc);

@@ -1,0 +1,89 @@
+module chacha_block where
+import chacha_openhitls
+
+Ctx = {
+            state = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,  // Constants
+                     0x00000000, 0x00000000, 0x00000000, 0x00000000,  // Key part 1
+                     0x00000000, 0x00000000, 0x00000000, 0x00000000,  // Key part 2
+                     0x00000000,                                        // Counter
+                     0x00000000, 0x00000000, 0x00000000],              // Nonce
+            last = {
+                c = [0 | _ <- [0..15]],
+                u = [0 | _ <- [0..63]]
+            },
+            lastLen = 0,
+            set = 0x00
+        }
+
+// Robust version of CHACHA20_Update that handles n=0
+CHACHA20_Update : {n, t}(fin n, t == n / 64, n % 64 == 0) => CRYPT_CHACHA20_Ctx
+    -> [n][8] -> [32] -> (CRYPT_CHACHA20_Ctx, [n][8])
+CHACHA20_Update ctx inp len = (final_ctx, out)
+    where
+        // 1. Generate the sequence of contexts by repeatedly applying CHACHA20_Block
+        ctx_sequence = [ctx] # [CHACHA20_Block c | c <- ctx_sequence]
+        // 2. Take the final context after 't' blocks
+        final_ctx = ctx_sequence @ `t
+        // 3. Get the keystreams from the generated blocks (t blocks after the initial context)
+        keystreams = [c.last.u | c <- take`{t} (drop`{1} ctx_sequence)]
+        ccs = (groupBy`{32} (join (join keystreams)))
+        ccss = [ (reverse (groupBy`{8} cc)) | cc <- ccs]
+        ccss2 = join ccss
+        // 4. XOR the input with the concatenated keystreams
+        out = [ in ^ u | in <- inp | u <- ccss2 ]
+
+
+// CRYPT_CHACHA20_Update - Complete version with 3-stage processing
+CRYPT_CHACHA20_Update : {total_len, k, full_blocks, remaining}
+    (fin total_len, fin k, fin full_blocks, fin remaining,
+     0 <= k, k < 64,
+     0 <= remaining, remaining < 64,
+     total_len >= k,
+     full_blocks == (total_len - k) / 64,
+     remaining == (total_len - k) % 64,
+     full_blocks * 64 + remaining + k == total_len) =>
+    CRYPT_CHACHA20_Ctx -> [total_len][8] -> [32] -> (CRYPT_CHACHA20_Ctx, [total_len][8])
+CRYPT_CHACHA20_Update ctx_inp inp len = (ctx_final, out_final)
+    where
+        ctx = ctx_inp
+        // Stage 1: Handle existing partial block (k bytes from last operation)
+        last_keystream = drop`{64 - k} ctx.last.u
+        out1 = [ inp_byte ^ key_byte | inp_byte <- take`{k} inp | key_byte <- take`{k} last_keystream ]
+
+        // Stage 2: Process complete 64-byte blocks (unconditional call)
+        after_k_inp = drop`{k} inp
+        full_blocks_inp = take`{full_blocks * 64} after_k_inp
+        (ctx_after_blocks, out2) = CHACHA20_Update ctx full_blocks_inp len
+
+        // Stage 3: Process remaining bytes (unconditional calculation)
+        remaining_inp = drop`{full_blocks * 64} after_k_inp
+        ctx_for_final_block = CHACHA20_Block ctx_after_blocks
+        keystream_for_remaining = ctx_for_final_block.last.u
+        ccs = (groupBy`{32} (join keystream_for_remaining))
+        ccss = [ (reverse (groupBy`{8} cc)) | cc <- ccs]
+        ccss2 = join ccss
+        out3 = [ inp_byte ^ key_byte | inp_byte <- remaining_inp
+                                     | key_byte <- take`{remaining} ccss2 ]
+        // Final context selection using a value-level 'if'
+        ctx_final = if (`remaining) == 0
+                    then ctx_after_blocks
+                    else ctx_for_final_block // { lastLen = 64 - `remaining }
+
+        // Combine all outputs
+        out_final = out1 # out2 # out3
+
+//CRYPT_CHACHA20_Ctrl(CRYPT_CHACHA20_Ctx *ctx, int32_t opt, void *val, uint32_t len)
+CRYPT_CHACHA20_Ctrl_Nonce : CRYPT_CHACHA20_Ctx -> [32] -> [12][8] -> CRYPT_CHACHA20_Ctx
+CRYPT_CHACHA20_Ctrl_Nonce ctx opt val = CRYPT_CHACHA20_SetNonce ctx val
+
+CRYPT_CHACHA20_Ctrl_Count : CRYPT_CHACHA20_Ctx -> [32] -> [4][8] -> CRYPT_CHACHA20_Ctx
+CRYPT_CHACHA20_Ctrl_Count ctx opt val = CRYPT_CHACHA20_SetCount ctx val
+
+
+
+
+
+
+
+
+

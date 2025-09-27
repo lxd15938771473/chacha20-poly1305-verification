@@ -1,0 +1,143 @@
+// ChaCha20 implementation for HITLS verification
+module chacha_openhitls where 
+
+// Constants for ChaCha20 sizes
+type CHACHA20_STATESIZE = 16
+type CHACHA20_KEYLEN = 32
+type CHACHA20_NONCELEN = 12
+type CHACHA20_STATEBYTES = 64
+KEYSET = 0x01
+NONCESET = 0x02
+
+
+// ChaCha20 context structure
+type CRYPT_CHACHA20_Ctx = {
+  state : [CHACHA20_STATESIZE][32], // Internal state
+  last : Chacha_buf,                // Last block buffer
+  lastLen : [32],                   // Length of last block
+  set : [8]                         // Flags for key/nonce set
+}
+
+// Buffer for ChaCha20 block output
+type Chacha_buf = {
+  c : [CHACHA20_STATESIZE][32], // Block words
+  u : [CHACHA20_STATEBYTES][8]  // Block bytes
+}
+
+
+GET_UINT32_LE : {n}(fin n) => [n][8] -> Integer -> [32]
+GET_UINT32_LE key i = key@(3+i) # key@(2+i) # key@(1+i) # key@(0+i)
+
+// Rotate left 32-bit value
+ROTL32 : [32] -> Integer -> [32]
+ROTL32 v n = ((v << n) || (v >> (32 - n)))
+
+// ChaCha20 quarter round operation
+QUARTERROUND : [4][32] -> [4][32]
+QUARTERROUND [a, b, c, d] = [a'', b'', c'', d''] where
+    a' = a + b
+    d' = ROTL32 (d ^ a') 16
+    c' = c + d'
+    b' = ROTL32 (b ^ c') 12
+    a'' = a' + b'
+    d'' = ROTL32 (d' ^ a'') 8
+    c'' = c' + d''
+    b'' = ROTL32 (b' ^ c'') 7
+
+
+// One ChaCha20 round (column and diagonal rounds)
+ROUND : [16][32] -> [16][32]
+ROUND [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15] = 
+      [z0, z1, z2, z3, z4, z5, z6, z7, z8, z9, z10, z11, z12, z13, z14, z15]
+    where 
+        [ y0, y4, y8,  y12 ] = QUARTERROUND [ x0, x4, x8,  x12 ]
+        [ y1, y5, y9,  y13 ] = QUARTERROUND [ x1, x5, x9,  x13 ]
+        [ y2, y6, y10, y14 ] = QUARTERROUND [ x2, x6, x10, x14 ]
+        [ y3, y7, y11, y15 ] = QUARTERROUND [ x3, x7, x11, x15 ]
+
+        // Diagonal round
+        [ z0, z5, z10, z15 ] = QUARTERROUND [ y0, y5, y10, y15 ]
+        [ z1, z6, z11, z12 ] = QUARTERROUND [ y1, y6, y11, y12 ]
+        [ z2, z7, z8,  z13 ] = QUARTERROUND [ y2, y7, y8,  y13 ]
+        [ z3, z4, z9,  z14 ] = QUARTERROUND [ y3, y4, y9,  y14 ]
+
+
+
+// Set the key in the ChaCha20 context
+CRYPT_CHACHA20_SetKey : CRYPT_CHACHA20_Ctx -> [CHACHA20_KEYLEN][8] -> CRYPT_CHACHA20_Ctx
+CRYPT_CHACHA20_SetKey ctx key = ctx'
+  where ctx' = {
+                state = state',
+                last = ctx.last,
+                lastLen = lastLen',
+                set = set'
+              }
+        state'0to3 = 0x61707865 # 0x3320646e # 0x79622d32 # 0x6b206574 // ChaCha20 constants
+        state'4to11 = GET_UINT32_LE key 0 # GET_UINT32_LE key 4 # GET_UINT32_LE key 8 # GET_UINT32_LE key 12 #
+                      GET_UINT32_LE key 16 # GET_UINT32_LE key 20 # GET_UINT32_LE key 24 # GET_UINT32_LE key 28
+        state'12to15 = 1 # ctx.state@13 # ctx.state@14 # ctx.state@15 // Counter and nonce
+        state'256 = state'0to3 # state'4to11 # state'12to15
+        state' = groupBy`{32} state'256
+        set' = ctx.set || KEYSET
+        lastLen' = 0
+
+// Set the nonce in the ChaCha20 context
+CRYPT_CHACHA20_SetNonce : CRYPT_CHACHA20_Ctx -> [CHACHA20_NONCELEN][8] -> CRYPT_CHACHA20_Ctx
+CRYPT_CHACHA20_SetNonce ctx nonce = ctx'
+  where ctx' = {
+                state = state',
+                last = ctx.last,
+                lastLen = lastLen',
+                set = set'
+              }
+        state = ctx.state
+        state' = [state@0, state@1, state@2, state@3,
+                  state@4, state@5, state@6, state@7,
+                  state@8, state@9, state@10, state@11,
+                  state@12, (GET_UINT32_LE nonce 0), (GET_UINT32_LE nonce 4), (GET_UINT32_LE nonce 8)]
+        set' = ctx.set || NONCESET
+        lastLen' = 0
+
+// Set the block counter in the ChaCha20 context
+CRYPT_CHACHA20_SetCount : CRYPT_CHACHA20_Ctx -> [4][8] -> CRYPT_CHACHA20_Ctx
+CRYPT_CHACHA20_SetCount ctx cnt = ctx'
+  where ctx' = {
+                state = state',
+                last = ctx.last,
+                lastLen = lastLen',
+                set = ctx.set
+              }
+        state = ctx.state
+        state' = [state@0, state@1, state@2, state@3,
+                  state@4, state@5, state@6, state@7,
+                  state@8, state@9, state@10, state@11,
+                  (GET_UINT32_LE cnt 0), state@13, state@14, state@15]
+        lastLen' = 0
+
+
+// Generate one ChaCha20 block and update context
+CHACHA20_Block : CRYPT_CHACHA20_Ctx -> CRYPT_CHACHA20_Ctx
+CHACHA20_Block ctx = ctx'
+  where ctx' = {
+                state = state',
+                last = {c = ce, u = ue},
+                lastLen = ctx.lastLen,
+                set = ctx.set
+              }
+        state = ctx.state
+        cround = (iterate ROUND state) @ 10 // 10 rounds (20 quarter rounds)
+        cs = [ (cround @ i) + (state @ i) | i <- [0 .. 15] ]
+        //ce = [ join (split`{4} ci) | ci <- cs ]
+        ce = [ join (reverse (split`{4} ci)) | ci <- cs ]
+        ue = (groupBy`{8} (join ce))
+        state' = [ if i == 12 then (state @ 12 + 1) else state @ i | i <- [0 .. 15]]
+
+
+
+
+
+
+
+
+
+
