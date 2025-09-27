@@ -1,56 +1,93 @@
-# Formal Verification of ChaCha20-Poly1305 in OpenSSL
-This is the source code repo for our project, which conducts the equivalence verification of ChaCha20-Poly1305：
-1) described in the standard (RFC 8439), and
-2) implemented in the OpenSSL (v3.0.10).
+# ChaCha20-Poly1305 Formal Verification Project
 
-This instruction describes the organization of the source code and how to use it.
+This project contains formal verification implementations and proofs for the ChaCha20 stream cipher and Poly1305 message authentication code, focusing on two major implementations:
 
-## Software Requirements
-- To run the RFC and OpenSSL Cryptol formal model of TLS 1.3 state machine you need [cryptol 3.1.0+](https://cryptol.net/).
-- To verify equivalence between the OpenSSL formal model and the C code implementations, you need [SAW](https://saw.galois.com/).
+- OpenSSL implementation verification
+- OpenHITLS implementation verification
 
-## File Organization
-**Source code files**:
-
-- ChaCha20 Model, in the directory ``chacha20/``
-  - ``chacha.c``  : Defined the source code of ChaCha20 algorithm in OpenSSL
-  - ``chacha.bc`` : Compiled bytecode from OpenSSL ChaCha20 algorithm source code
-  - ``chacha_openssl.cry`` :  Defined the ChaCha20 Cryptol model based on OpneSSL source code
-  - ``chacha_rfc.cry`` : Defined the ChaCha20 Cryptol model based on RFC standard document 
-  - ``chacha.saw``: The script for verifying the equivalence between OpenSSL Cryptol models and ChaCha20 C code implementations
-  - ``chacha_property.cry``: Proved the ChaCha20 equivalence and some security properties between the Cryptol model based on OpenSSL and the Cryptol model based on standard documentation
-- Poly1305  Model,  in the directory ``poly1305/``
-  - ``poly.c``  : Defined the source code of Poly1305 algorithm in OpenSSL
-  - ``poly.bc`` : Compiled bytecode from OpenSSL Poly1305 algorithm source code
-  - ``poly64.c``  : Defined the source code for the 64-bit OpenSSL Poly1305 algorithm
-  - ``poly64.bc`` :  Bytecode compiled from the 64 bit OpenSSL Poly1305 algorithm source code
-  - ``poly_openssl.cry`` :  Defined the Poly1305 Cryptol model based on OpneSSL source code
-  - ``poly_openssl54.cry`` :  Defined the Poly1305 Cryptol model based on 64-bit OpneSSL source code
-  - ``poly_rfc.cry`` : Defined the Poly1305 Cryptol model based on RFC standard document 
-  - ``poly.saw``: The script for verifying the equivalence between OpenSSL Cryptol models and Poly1305 C code implementations
-  - ``poly_property.cry``: Proved the Poly1305 equivalence and some security properties between the Cryptol model based on OpenSSL and the Cryptol model based on standard documentation
-
-## The Execution of the RFC Model Alone
-You can use the following commands to run the RFC Cryptol model once in the console for revision and testing.
+## Project Structure
 
 ```
-PROJECTROOTDIR> cd chacha20 / cd poly1305
-PROJECTROOTDIR/chacha20> Cryptol
-PROJECTROOTDIR/RFC_Model> :l chacha_rfc.cry / :l poly_rfc.cry
+.
+├── openhitls/           # OpenHITLS implementation verification
+│   ├── chacha20/        # ChaCha20 verification files
+│   │   ├── *.cry       # Cryptol specifications
+│   │   ├── *.c         # C implementation
+│   │   ├── *.bc        # LLVM bitcode files
+│   │   └── *.saw      # SAW verification scripts
+│   └── poly1305/       # Poly1305 verification files
+│       ├── *.cry       # Cryptol specifications
+│       ├── *.c         # C implementation
+│       ├── *.bc        # LLVM bitcode files
+│       └── *.saw      # SAW verification scripts
+│
+└── openssl/            # OpenSSL implementation verification
+    ├── chacha20/       # ChaCha20 verification files
+    │   ├── *.cry       # Cryptol specifications
+    │   ├── *.c         # C implementation
+    │   ├── *.bc        # LLVM bitcode files
+    │   └── *.saw      # SAW verification scripts
+    └── poly1305/       # Poly1305 verification files
+        ├── *.cry       # Cryptol specifications
+        ├── *.c         # C implementation
+        ├── *.bc        # LLVM bitcode files
+        └── *.saw      # SAW verification scripts
 ```
 
-## The Execution of the OpenSSL Model Alone
-You can use the following commands to run the OpenSSL Cryptol model once in the console for revision and testing.
+## Overview
 
-```
-PROJECTROOTDIR> cd chacha20 / cd poly1305
-PROJECTROOTDIR/chacha20> Cryptol
-PROJECTROOTDIR/RFC_Model> :l chacha_openssl.cry / :l poly_openssl.cry / :l poly_openssl64.cry
-```
+This project focuses on the formal verification of two critical cryptographic primitives:
 
-## The Execution of SAW
-You can use the following commands to run the SAWScript to verify the equivalence between OpenSSL formal models and C code implementations and output the results to the terminal.
-```
-PROJECTROOTDIR> cd chacha20 / cd poly1305
-PROJECTROOTDIR/saw> saw [filename].saw
-```
+1. **ChaCha20**: A stream cipher designed by Daniel J. Bernstein
+2. **Poly1305**: A message authentication code also designed by Daniel J. Bernstein
+
+The verification is performed on two different implementations:
+
+- **OpenSSL**: The widely-used cryptographic library
+- **OpenHITLS**: A high-performance implementation
+
+## Tools Used
+
+- **Cryptol**: A domain-specific language for cryptographic algorithms
+- **SAW (Software Analysis Workbench)**: For formal verification
+- **LLVM**: For intermediate representation of C code
+
+## File Types
+
+- `.cry` files: Cryptol specifications
+- `.c` files: C implementation source code
+- `.bc` files: LLVM bitcode files
+- `.saw` files: SAW verification scripts
+
+## Verification Approach
+
+The verification process includes:
+
+1. Specification of the algorithms in Cryptol
+2. Implementation in C
+3. Generation of LLVM bitcode
+4. Formal verification using SAW
+5. Property checking and equivalence proofs
+
+## Requirements
+
+To work with this project, you need:
+
+- Cryptol
+- SAW
+- LLVM toolchain
+- C compiler
+
+## Getting Started
+
+1. Install the required tools
+2. Clone this repository
+3. Navigate to either the OpenSSL or OpenHITLS directory
+4. Run the verification scripts using SAW
+
+## Documentation
+
+Each implementation directory contains its own README with specific details:
+
+- See `openssl/README.md` for OpenSSL verification details
+- See `openhitls/README.md` for OpenHITLS verification details
