@@ -1,0 +1,89 @@
+module sum_property where
+import chacha_block
+import chacha_openhitls
+import chacha_rfc
+import chacha_property
+
+ctxs = {
+            state = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,  // Constants
+                     0x00000000, 0x00000000, 0x00000000, 0x00000000,  // Key part 1
+                     0x00000000, 0x00000000, 0x00000000, 0x00000000,  // Key part 2
+                     0x00000000,                                        // Counter
+                     0x00000000, 0x00000000, 0x00000000],              // Nonce
+            last = {
+                c = [0 | _ <- [0..15]],
+                u = [0 | _ <- [0..63]]
+            },
+            lastLen = 0,
+            set = 0x00
+        }
+
+tkey1 =  0x0000000000000000000000000000000000000000000000000000000000000000
+ti1  =  0x00000000
+tn1 =   0x000000000000000000000000
+tmsg1 =  [[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], [0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00]]
+
+chacha_update_c_state_multi : { msg_chunks }
+    (fin msg_chunks) =>
+    CRYPT_CHACHA20_Ctx -> [msg_chunks][64][8] -> [32] -> [msg_chunks][64][8]
+chacha_update_c_state_multi ctx msgs len  = out2
+  where
+    states = [(ctx, msgs@0)] # [CHACHA20_Update s msg len | msg <- msgs | s <- (states.0) ]
+    states' = join (drop`{1} states.1)
+    out1 = join [reverse o | o <- (groupBy`{4} states')]
+    out2 = groupBy`{64} out1
+    // out2 = join [ reverse o | o <- out ]
+// 
+
+chacha_c_state_multi_correct : { msg_chunks }
+    (fin msg_chunks, 32 >= width (64 * msg_chunks)) =>
+    [256] -> [32] -> [96] -> [msg_chunks][64][8] -> Bit
+property chacha_c_state_multi_correct key count nonce msgs  =
+    // ChaCha20Encrypt key count nonce (join msgs) == CHACHA20_ENC key count nonce (join msgs)
+    ChaCha20Encrypt key count nonce (join msgs) == join (chacha_update_c_state_multi ctx' msgs (length msgs))
+    where 
+      ctx = CRYPT_CHACHA20_SetKey Ctx (groupBy`{8} (key))
+      ctx' = CRYPT_CHACHA20_SetNonce (CRYPT_CHACHA20_SetCount ctx (groupBy`{8} count)) (groupBy`{8} (nonce))
+
+
+//:prove chacha_update_append`{64}
+chacha_update_append : {n, t}(fin n, t == n / 64, n % 64 == 0) => CRYPT_CHACHA20_Ctx
+    -> [n][8] -> [n][8] -> [32] -> Bit
+chacha_update_append ctx inp1 inp2 len =
+  (out1 # ((CHACHA20_Update ctx2 inp2 len).1)) == (CHACHA20_Update ctx (inp1 # inp2) len).1
+  where
+    (ctx2, out1) = CHACHA20_Update ctx inp1 len
+
+chacha_update_append_empty : {n, t}(fin n, t == n / 64, n % 64 == 0) => CRYPT_CHACHA20_Ctx
+    -> [n][8] -> [32] -> Bit
+chacha_update_append_empty ctx inp len =
+  (CHACHA20_Update ctx inp len).1 == (CHACHA20_Update ctx (inp # []) len).1
+
+//prove empty
+property chacha_update_empty ctx = (CHACHA20_Update ctx [] 0).0 == ctx
+
+//:prove chacha_update_append_init`{64}
+chacha_update_append_init : {n, t}(fin n, t == n / 64, n % 64 == 0) => [256] -> [32] -> [96]
+    -> [n][8] -> [n][8] -> [32] -> Bit
+chacha_update_append_init key count nonce inp1 inp2 len = chacha_update_append ctx' inp1 inp2 len
+    // CHACHA20_Update (hmac_update_c_state s x) y == CHACHA20_Update s (x # y)
+    where
+      ctx = CRYPT_CHACHA20_SetKey Ctx (groupBy`{8} (key))
+      ctx' = CRYPT_CHACHA20_SetNonce (CRYPT_CHACHA20_SetCount ctx (reverse (groupBy`{8} count))) (groupBy`{8} (nonce))
+
+
+property chacha2_update_empty ctx =
+  ctx.lastLen == ctx.lastLen % (zero # 32)
+  ==>
+  chacha_update_empty ctx

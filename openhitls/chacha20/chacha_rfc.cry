@@ -96,6 +96,8 @@ ChaCha20Block key nonce i = (ChaCha initialState 10) + initialState where
 ChaCha20Encrypt : {a} (fin a) => ChaChaKey -> [32] -> [96] -> [a][8] -> [a][8]
 ChaCha20Encrypt k i n msg = ChaCha20EncryptBytes msg k n i
 
+// ChaCha20EncryptS : {a} (fin a) => [][8] -> [32] -> [4][32] -> [a][8] -> [a][8]
+
 ChaCha20EncryptBytes msg k n i= [ m ^ kb | m <- msg | kb <- keystream ] where
     keystream = groupBy`{8}(join (join (ChaCha20ExpandKey k n i)))
 

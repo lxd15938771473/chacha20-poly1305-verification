@@ -1,0 +1,238 @@
+DIGEST 22d633e58bbad00e3b5bc51ad49c288c
+Fequiv
+R15:18 Coq.Lists.List <> <> lib
+ax 32:37 <> string
+ax 58:69 <> empty_string
+R73:78 equiv <> string defax
+ax 92:97 <> concat
+R107:110 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R101:106 equiv <> string defax
+R117:120 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R111:116 equiv <> string defax
+R121:126 equiv <> string defax
+ax 221:232 <> concat_assoc
+binder 243:243 <> a:7
+binder 245:245 <> b:8
+binder 247:247 <> c:9
+R271:273 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R250:255 equiv <> concat defax
+R257:257 equiv <> a:7 var
+R260:265 equiv <> concat defax
+R267:267 equiv <> b:8 var
+R269:269 equiv <> c:9 var
+R274:279 equiv <> concat defax
+R282:287 equiv <> concat defax
+R289:289 equiv <> a:7 var
+R291:291 equiv <> b:8 var
+R294:294 equiv <> c:9 var
+ax 304:315 <> concat_empty
+R330:335 equiv <> string defax
+binder 326:326 <> s:12
+R359:361 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R338:343 equiv <> concat defax
+R345:345 equiv <> s:12 var
+R347:358 equiv <> empty_string defax
+R362:362 equiv <> s:12 var
+ax 371:384 <> concat_empty_l
+R399:404 equiv <> string defax
+binder 395:395 <> s:15
+R428:430 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R407:412 equiv <> concat defax
+R414:425 equiv <> empty_string defax
+R427:427 equiv <> s:15 var
+R431:431 equiv <> s:15 var
+ax 446:450 <> state
+ax 471:474 <> HMAC
+R484:487 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R478:483 equiv <> string defax
+R494:497 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R488:493 equiv <> string defax
+R498:503 equiv <> string defax
+ax 517:525 <> HMAC_init
+R535:538 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R529:534 equiv <> string defax
+R539:543 equiv <> state defax
+ax 557:567 <> HMAC_update
+R577:580 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R571:576 equiv <> string defax
+R586:589 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R581:585 equiv <> state defax
+R590:594 equiv <> state defax
+ax 608:618 <> HMAC_digest
+R627:630 Coq.Init.Logic <> ::type_scope:x_'->'_x not
+R622:626 equiv <> state defax
+R631:636 equiv <> string defax
+ax 694:706 <> update_concat
+binder 717:718 <> m1:28
+binder 720:721 <> m2:29
+binder 723:723 <> s:30
+R758:760 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R730:740 equiv <> HMAC_update defax
+R743:748 equiv <> concat defax
+R750:751 equiv <> m1:28 var
+R753:754 equiv <> m2:29 var
+R757:757 equiv <> s:30 var
+R761:771 equiv <> HMAC_update defax
+R773:774 equiv <> m2:29 var
+R777:787 equiv <> HMAC_update defax
+R789:790 equiv <> m1:28 var
+R792:792 equiv <> s:30 var
+ax 863:871 <> equiv_one
+binder 882:882 <> m:33
+binder 884:884 <> k:34
+R932:934 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R891:901 equiv <> HMAC_digest defax
+R904:914 equiv <> HMAC_update defax
+R916:916 equiv <> m:33 var
+R919:927 equiv <> HMAC_init defax
+R929:929 equiv <> k:34 var
+R935:938 equiv <> HMAC defax
+R940:940 equiv <> k:34 var
+R942:942 equiv <> m:33 var
+ax 1005:1016 <> update_empty
+binder 1027:1027 <> s:37
+R1056:1058 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R1030:1040 equiv <> HMAC_update defax
+R1042:1053 equiv <> empty_string defax
+R1055:1055 equiv <> s:37 var
+R1059:1059 equiv <> s:37 var
+prf 1069:1085 <> fold_right_concat
+binder 1096:1096 <> s:40
+binder 1098:1098 <> l:41
+R1128:1130 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R1105:1114 Coq.Lists.List <> fold_right def
+R1127:1127 equiv <> l:41 var
+R1124:1124 equiv <> s:40 var
+R1116:1121 equiv <> concat defax
+R1131:1136 equiv <> concat defax
+R1139:1148 Coq.Lists.List <> fold_right def
+R1170:1170 equiv <> l:41 var
+R1157:1168 equiv <> empty_string defax
+R1150:1155 equiv <> concat defax
+R1173:1173 equiv <> s:40 var
+R1220:1233 equiv <> concat_empty_l prfax
+R1220:1233 equiv <> concat_empty_l prfax
+R1220:1233 equiv <> concat_empty_l prfax
+R1277:1288 equiv <> concat_assoc prfax
+R1277:1288 equiv <> concat_assoc prfax
+R1277:1288 equiv <> concat_assoc prfax
+prf 1309:1325 <> update_concat_any
+R1342:1345 Coq.Init.Datatypes <> list ind
+R1347:1352 equiv <> string defax
+binder 1338:1338 <> l:42
+R1364:1369 equiv <> string defax
+binder 1356:1358 <> key:43
+binder 1360:1360 <> s:44
+R1456:1462 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R1377:1387 equiv <> HMAC_update defax
+R1390:1395 equiv <> concat defax
+R1398:1407 Coq.Lists.List <> fold_right def
+R1430:1432 Coq.Lists.List <> rev def
+R1434:1434 equiv <> l:42 var
+R1416:1427 equiv <> empty_string defax
+R1409:1414 equiv <> concat defax
+R1438:1438 equiv <> s:44 var
+R1442:1450 equiv <> HMAC_init defax
+R1452:1454 equiv <> key:43 var
+R1463:1473 equiv <> HMAC_update defax
+R1475:1475 equiv <> s:44 var
+R1478:1487 Coq.Lists.List <> fold_right def
+R1517:1517 equiv <> l:42 var
+R1502:1510 equiv <> HMAC_init defax
+R1512:1514 equiv <> key:43 var
+R1489:1499 equiv <> HMAC_update defax
+R1577:1590 equiv <> concat_empty_l prfax
+R1577:1590 equiv <> concat_empty_l prfax
+R1577:1590 equiv <> concat_empty_l prfax
+R1628:1640 equiv <> update_concat prfax
+R1628:1640 equiv <> update_concat prfax
+R1628:1640 equiv <> update_concat prfax
+R1651:1664 Coq.Lists.List <> fold_right_app thm
+R1651:1664 Coq.Lists.List <> fold_right_app thm
+R1651:1664 Coq.Lists.List <> fold_right_app thm
+R1688:1704 equiv <> fold_right_concat thm
+R1688:1704 equiv <> fold_right_concat thm
+R1688:1704 equiv <> fold_right_concat thm
+R1722:1733 equiv <> concat_empty prfax
+R1722:1733 equiv <> concat_empty prfax
+R1722:1733 equiv <> concat_empty prfax
+R1775:1786 equiv <> concat_assoc prfax
+R1775:1786 equiv <> concat_assoc prfax
+R1775:1786 equiv <> concat_assoc prfax
+prf 1811:1832 <> HMAC_incremental_equiv
+R1851:1854 Coq.Init.Datatypes <> list ind
+R1856:1861 equiv <> string defax
+binder 1846:1847 <> ms:45
+binder 1864:1866 <> key:46
+R1917:1923 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R1873:1876 equiv <> HMAC defax
+R1878:1880 equiv <> key:46 var
+R1883:1892 Coq.Lists.List <> fold_right def
+R1914:1915 equiv <> ms:45 var
+R1901:1912 equiv <> empty_string defax
+R1894:1899 equiv <> concat defax
+R1924:1934 equiv <> HMAC_digest defax
+R1937:1945 Coq.Lists.List <> fold_left def
+R1995:2003 equiv <> HMAC_init defax
+R2005:2007 equiv <> key:46 var
+R1991:1992 equiv <> ms:45 var
+R1957:1961 equiv <> state defax
+binder 1953:1954 <> st:47
+binder 1964:1966 <> msg:48
+R1971:1981 equiv <> HMAC_update defax
+R1983:1985 equiv <> msg:48 var
+R1987:1988 equiv <> st:47 var
+R2042:2060 Coq.Lists.List <> fold_left_rev_right thm
+R2042:2060 Coq.Lists.List <> fold_left_rev_right thm
+R2042:2060 Coq.Lists.List <> fold_left_rev_right thm
+R2080:2082 Coq.Lists.List <> rev def
+R2080:2082 Coq.Lists.List <> rev def
+R2125:2133 equiv <> equiv_one prfax
+R2125:2133 equiv <> equiv_one prfax
+R2125:2133 equiv <> equiv_one prfax
+R2170:2181 equiv <> update_empty prfax
+R2170:2181 equiv <> update_empty prfax
+R2170:2181 equiv <> update_empty prfax
+R2212:2214 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2205:2207 Coq.Lists.List <> rev def
+R2209:2211 Coq.Init.Datatypes <> nil constr
+R2215:2217 Coq.Lists.List <> rev def
+R2220:2222 Coq.Lists.List <> rev def
+R2226:2229 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2212:2214 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2205:2207 Coq.Lists.List <> rev def
+R2209:2211 Coq.Init.Datatypes <> nil constr
+R2215:2217 Coq.Lists.List <> rev def
+R2220:2222 Coq.Lists.List <> rev def
+R2226:2229 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2279:2292 Coq.Lists.List <> rev_involutive thm
+R2279:2292 Coq.Lists.List <> rev_involutive thm
+R2279:2292 Coq.Lists.List <> rev_involutive thm
+R2339:2347 equiv <> equiv_one prfax
+R2339:2347 equiv <> equiv_one prfax
+R2339:2347 equiv <> equiv_one prfax
+R2361:2377 equiv <> update_concat_any thm
+R2361:2377 equiv <> update_concat_any thm
+R2361:2377 equiv <> update_concat_any thm
+R2414:2416 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2402:2404 Coq.Lists.List <> rev def
+R2408:2411 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2417:2419 Coq.Lists.List <> rev def
+R2422:2424 Coq.Lists.List <> rev def
+R2414:2416 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R2402:2404 Coq.Lists.List <> rev def
+R2408:2411 Coq.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2417:2419 Coq.Lists.List <> rev def
+R2422:2424 Coq.Lists.List <> rev def
+R2459:2472 Coq.Lists.List <> rev_involutive thm
+R2459:2472 Coq.Lists.List <> rev_involutive thm
+R2459:2472 Coq.Lists.List <> rev_involutive thm
+R2518:2531 Coq.Lists.List <> fold_right_app thm
+R2518:2531 Coq.Lists.List <> fold_right_app thm
+R2518:2531 Coq.Lists.List <> fold_right_app thm
+R2549:2560 equiv <> concat_empty prfax
+R2549:2560 equiv <> concat_empty prfax
+R2549:2560 equiv <> concat_empty prfax
+R2571:2587 equiv <> fold_right_concat thm
+R2571:2587 equiv <> fold_right_concat thm
+R2571:2587 equiv <> fold_right_concat thm

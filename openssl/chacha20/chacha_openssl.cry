@@ -61,9 +61,18 @@ chacha20_core input = output'
 extInp : {n, k}(fin n, k == 64 - (n % 64)) => [n][8] -> [n + k][8]
 extInp inp = reverse (groupBy`{8} (zext (join (reverse inp))))
 
+
+
+
 change_input : [16][32] -> [16][32]
 change_input input = input'
     where input' = [ if i == 12 then (input @ 12 + 1) else input @ i | i <- [0 .. 15]]
+
+
+tkey1 =  0x0000000000000000000000000000000000000000000000000000000000000000
+ti1  =  0x00000000
+tn1 =   0x000000000000000000000000
+tmsg1 =  []
 
 ChaCha20EncryptSSL : {a} (fin a) => [256] -> [32] -> [96] -> [a][8] -> [a][8]
 ChaCha20EncryptSSL k i n msg = ChaCha20_ctr32 msg (groupBy`{32} k) ([i] # (groupBy`{32} n))
